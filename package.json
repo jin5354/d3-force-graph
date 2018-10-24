@@ -1,6 +1,6 @@
 {
   "name": "d3-force-graph",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "d3-force-graph",
   "main": "index.js",
   "scripts": {
