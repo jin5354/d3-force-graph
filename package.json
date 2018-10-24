@@ -1,0 +1,33 @@
+{
+  "name": "d3-force-graph",
+  "version": "1.0.0",
+  "description": "d3-force-graph",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack --config build/webpack.config.js --colors --profile"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jin5354/d3-force-graph.git"
+  },
+  "author": "jin5354<xiaoyanjinx@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jin5354/d3-force-graph/issues"
+  },
+  "homepage": "https://github.com/jin5354/d3-force-graph#readme",
+  "devDependencies": {
+    "@babel/core": "^7.1.2",
+    "@babel/preset-env": "^7.1.0",
+    "@types/three": "^0.93.1",
+    "babel-loader": "^8.0.4",
+    "clean-webpack-plugin": "^0.1.19",
+    "d3-force": "^1.1.2",
+    "three": "^0.97.0",
+    "ts-loader": "^5.2.1",
+    "tslint": "^5.11.0",
+    "tslint-config-jin": "^1.0.3",
+    "webpack": "^4.20.2",
+    "webpack-cli": "^3.1.2"
+  }
+}
