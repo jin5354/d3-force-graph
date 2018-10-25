@@ -1,18 +1,18 @@
 import * as THREE from 'three'
 import * as v3 from 'v3js'
-import nodesVS from './shaders/nodes.vs'
-import nodesFS from './shaders/nodes.fs'
-import linesVS from './shaders/lines.vs'
-import linesFS from './shaders/lines.fs'
-import arrowsVS from './shaders/arrows.vs'
-import arrowsFS from './shaders/arrows.fs'
-import imageVS from './shaders/image.vs'
-import imageFS from './shaders/image.fs'
-import hlNodesVS from './shaders/hlNodes.vs'
-import hlNodesFS from './shaders/hlNodes.fs'
-import hlLinesVS from './shaders/hlLines.vs'
-import hlLinesFS from './shaders/hlLines.fs'
-import worker from './worker.js'
+import * as nodesVS from './shaders/nodes.vs'
+import * as nodesFS from './shaders/nodes.fs'
+import * as linesFS from './shaders/lines.fs'
+import * as linesVS from './shaders/lines.vs'
+import * as arrowsVS from './shaders/arrows.vs'
+import * as arrowsFS from './shaders/arrows.fs'
+import * as imageVS from './shaders/image.vs'
+import * as imageFS from './shaders/image.fs'
+import * as hlNodesVS from './shaders/hlNodes.vs'
+import * as hlNodesFS from './shaders/hlNodes.fs'
+import * as hlLinesVS from './shaders/hlLines.vs'
+import * as hlLinesFS from './shaders/hlLines.fs'
+import * as worker from './worker.js'
 import arrowPNG from '../assets/arrow.png'
 import nodePNG from '../assets/node.png'
 
@@ -238,16 +238,20 @@ export class D3ForceGraph {
   }
 
   init() {
-    this.processedData = this.preProcessData()
+    try {
+      this.processedData = this.preProcessData()
+      this.perfInfo.nodeCounts = this.processedData.nodes.length
+      this.perfInfo.linkCounts = this.processedData.links.length
 
-    this.perfInfo.nodeCounts = this.processedData.nodes.length
-    this.perfInfo.linkCounts = this.processedData.links.length
+      this.prepareScene()
+      this.prepareBasicMesh()
+      this.installControls()
 
-    this.prepareScene()
-    this.prepareBasicMesh()
-    this.installControls()
-
-    this.initWorker()
+      this.initWorker()
+      this.start()
+    }catch(e) {
+      console.log(e)
+    }
   }
 
   /**
@@ -284,7 +288,6 @@ export class D3ForceGraph {
       }
     })
 
-    let linkCount = 0
     let linkCountMap: {
       [key: string]: number
     } = {}
@@ -302,7 +305,6 @@ export class D3ForceGraph {
           color: e.color
         }
         linkCountMap[e.source] = (linkCountMap[e.source] || 0) + 1
-        linkCount++
       }
     })
 
@@ -490,8 +492,8 @@ export class D3ForceGraph {
         case('end'): {
           this.targetPositionStatus = new Float32Array(event.data.nodes)
 
-          this.$container.addEventListener('mousemove', this.mouseMoveHandler, false)
-          this.$container.addEventListener('mouseout', this.mouseOutHandler, false)
+          this.$container.addEventListener('mousemove', this.mouseMoveHandler.bind(this), false)
+          this.$container.addEventListener('mouseout', this.mouseOutHandler.bind(this), false)
 
           // 布局结束后，如果鼠标不在图像区域，就停止渲染（节能）
           setTimeout(() => {
@@ -521,7 +523,7 @@ export class D3ForceGraph {
   // 启动渲染
   startRender(): void {
     if(!this.rafId) {
-      this.rafId = requestAnimationFrame(this.render)
+      this.rafId = requestAnimationFrame(this.render.bind(this))
     }
   }
 

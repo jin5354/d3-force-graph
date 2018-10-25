@@ -26,6 +26,7 @@
     "clean-webpack-plugin": "^0.1.19",
     "d3-force": "^1.1.2",
     "raw-loader": "^0.5.1",
+    "string-replace-loader": "^2.1.1",
     "three": "^0.97.0",
     "ts-loader": "^5.2.1",
     "tslint": "^5.11.0",

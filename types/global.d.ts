@@ -1,10 +1,20 @@
 interface Window {
-    THREE: any
+  THREE: any
 }
 
 declare var window: Window
 
-declare module '*.vs'
-declare module '*.fs'
+// https://github.com/webpack-contrib/raw-loader/issues/54
+declare module '*.vs' {
+  const content: string
+  export = content
+}
+declare module '*.fs' {
+  const content: string
+  export = content
+}
+declare module '*worker.js' {
+  const content: string
+  export = content
+}
 declare module '*.png'
-declare module '*worker.js'

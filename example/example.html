@@ -4,10 +4,29 @@
     <script src="../dist/d3-force-graph.js"></script>
   </head>
   <body>
-    <p>123</p>
+    <div id="container"></div>
     <script>
       window.onload = () => {
-        console.log('load!')
+        let $container = document.getElementById('container')
+        let testData = {
+          nodes: [{
+            id: 'a'
+          }, {
+            id: 'b'
+          }, {
+            id: 'c'
+          }, {
+            id: 'd'
+          }],
+          links: [{
+            source: 'a',
+            target: 'b'
+          }, {
+            source: 'c',
+            target: 'd'
+          }]
+        }
+        a = new D3ForceGraph($container, testData)
       }
     </script>
   </body>

@@ -1,8 +1,8 @@
-import 'd3-collection/dist/d3-collection.min.js'
-import 'd3-dispatch/dist/d3-dispatch.min.js'
-import 'd3-quadtree/dist/d3-quadtree.min.js'
-import 'd3-timer/dist/d3-timer.min.js'
-import 'd3-force/dist/d3-force.min.js'
+importScripts('d3-collection/dist/d3-collection.min.js')
+importScripts('d3-dispatch/dist/d3-dispatch.min.js')
+importScripts('d3-quadtree/dist/d3-quadtree.min.js')
+importScripts('d3-timer/dist/d3-timer.min.js')
+importScripts('d3-force/dist/d3-force.min.js')
 
 let simulation = null
 let n = 0
