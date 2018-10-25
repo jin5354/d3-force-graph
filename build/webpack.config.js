@@ -8,7 +8,6 @@ module.exports = {
   },
   output: {
     libraryTarget: 'umd',
-    library: 'D3ForceGraph',
     filename: 'd3-force-graph.js',
     path: path.resolve(__dirname, '../dist'),
     umdNamedDefine: true
@@ -24,7 +23,7 @@ module.exports = {
         ]
       },
       {
-        test: /\.(vs|fs)$/,
+        test: /(\.vs|\.fs|worker\.js)$/,
         use: 'raw-loader'
       },
       {

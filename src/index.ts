@@ -12,7 +12,9 @@ import hlNodesVS from './shaders/hlNodes.vs'
 import hlNodesFS from './shaders/hlNodes.fs'
 import hlLinesVS from './shaders/hlLines.vs'
 import hlLinesFS from './shaders/hlLines.fs'
-import worker from 'raw-loader!./worker.js'
+import worker from './worker.js'
+import arrowPNG from '../assets/arrow.png'
+import nodePNG from '../assets/node.png'
 
 window.THREE = THREE
 require('three/examples/js/controls/MapControls.js')
@@ -150,10 +152,10 @@ const GRAPH_DEFAULT_PERF_INFO: GraphPerfInfo = {
 }
 
 const textureLoader: THREE.TextureLoader = new THREE.TextureLoader()
-const ARROW_TEXTURE = textureLoader.load('../assets/arrow.png')
-const NODE_TEXTURE = textureLoader.load('../assets/node.png')
+const ARROW_TEXTURE = textureLoader.load(arrowPNG)
+const NODE_TEXTURE = textureLoader.load(nodePNG)
 
-export default class D3ForceGraph {
+export class D3ForceGraph {
 
   $container: HTMLElement
   containerRect: ClientRect
@@ -677,7 +679,6 @@ export default class D3ForceGraph {
 
         let nodes = this.getAllVisibleNodes()
         let nullc = 0
-        let defaultc = 0
         let havec = 0
 
         for(let i = 0, len = nodes.length; i < len; i++) {
@@ -687,18 +688,9 @@ export default class D3ForceGraph {
           let info = this.processedData.nodeInfoMap[id]
 
           if(!info.imageTexture) {
-            if((!id.startsWith('null') && !info.image) || info.image === 'http://img.geilicdn.com/u_default.jpg') {
-              defaultc++
-              this.getRoundImage(`/_/wx.png`).then((canvas) => {
-                info.imageTexture = new THREE.Texture(canvas)
-                info.imageTexture.needsUpdate = true
-                this.generateAvaPoint(info, id, x, y)
-              }).catch(() => {
-                info.image = null
-              })
-            }else if(info.image){
+            if(info.image){
               havec++
-              this.getRoundImage(`${info.image}?w=64&h=64`).then((canvas) => {
+              this.getRoundImage(info.image).then((canvas) => {
                 info.imageTexture = new THREE.Texture(canvas)
                 info.imageTexture.needsUpdate = true
                 this.generateAvaPoint(info, id, x, y)
@@ -712,7 +704,7 @@ export default class D3ForceGraph {
             this.generateAvaPoint(info, id, x, y)
           }
         }
-        console.log(`同屏节点${nodes.length}个，游客${nullc}个，默认头像${defaultc}个，自定义头像${havec}个`)
+        console.log(`同屏节点${nodes.length}个，游客${nullc}个，自定义头像${havec}个`)
         this.throttleTimer = null
       }, 1000)
     }else {
