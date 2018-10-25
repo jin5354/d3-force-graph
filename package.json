@@ -2,9 +2,10 @@
   "name": "d3-force-graph",
   "version": "0.0.1",
   "description": "d3-force-graph",
-  "main": "index.js",
+  "main": "dist/d3-force-graph.js",
+  "typings": "dist/d3-force-graph.d.ts",
   "scripts": {
-    "build": "webpack --config build/webpack.config.js --colors --profile"
+    "build": "webpack --config build/webpack.config.js --colors --profile && tsc --outDir dist -d && rm dist/index.js"
   },
   "repository": {
     "type": "git",
