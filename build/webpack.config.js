@@ -22,6 +22,19 @@ module.exports = {
             'babel-loader',
             'ts-loader'
         ]
+      },
+      {
+        test: /\.(vs|fs)$/,
+        use: 'raw-loader'
+      },
+      {
+        test: /\.(png|jpg|gif|eot|svg|ttf|woff|woff2)(\?\S*)?$/,
+        use: {
+            loader: 'url-loader',
+            options: {
+              limit: 8192
+            }
+        }
       }
     ]
   },

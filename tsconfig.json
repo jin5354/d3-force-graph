@@ -4,11 +4,12 @@
       "noImplicitReturns": true,
       "noFallthroughCasesInSwitch": true,
       "noImplicitAny": true,
-      "strictNullChecks": true,
-      "strictPropertyInitialization": true,
       "allowSyntheticDefaultImports": true
   },
   "include": [
       "./src/**/*"
+  ],
+  "files": [
+    "./types/global.d.ts"
   ]
 }

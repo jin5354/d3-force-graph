@@ -1,3 +1,6 @@
 {
-  "extends": "tslint-config-jin"
+  "extends": "tslint-config-jin",
+  "rules": {
+    "one-variable-per-declaration": false
+  }
 }
