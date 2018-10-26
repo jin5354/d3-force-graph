@@ -10,23 +10,19 @@
         let $container = document.getElementById('container')
         let testData = {
           nodes: [{
-            id: 'a'
+            id: '测试节点A'
           }, {
-            id: 'b'
-          }, {
-            id: 'c'
-          }, {
-            id: 'd'
+            id: '测试节点B'
           }],
           links: [{
-            source: 'a',
-            target: 'b'
-          }, {
-            source: 'c',
-            target: 'd'
+            source: '测试节点A',
+            target: '测试节点B'
           }]
         }
-        a = new D3ForceGraph($container, testData)
+        a = new D3ForceGraph($container, testData, {
+          width: 500,
+          height: 500
+        })
       }
     </script>
   </body>
