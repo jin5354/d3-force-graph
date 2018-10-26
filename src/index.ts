@@ -249,6 +249,7 @@ export class D3ForceGraph {
       this.prepareScene()
       this.prepareBasicMesh()
       this.installControls()
+      this.bindEvent()
 
       this.initWorker()
       this.start()
@@ -993,6 +994,8 @@ export class D3ForceGraph {
   }
   chartMouseEnterHandler(): void {
     this.mouseStatus.mouseOnChart = true
+    clearTimeout(this.throttleTimer)
+    this.throttleTimer = null
     // 开启渲染
     this.startRender()
   }
@@ -1002,6 +1005,12 @@ export class D3ForceGraph {
     if(!this.perfInfo.layouting) {
       this.stopRender()
     }
+  }
+
+  // 绑定事件
+  bindEvent(): void {
+    this.$container.addEventListener('mouseenter', this.chartMouseEnterHandler.bind(this))
+    this.$container.addEventListener('mouseleave', this.chartMouseLeaveHandler.bind(this))
   }
 
   // Fitting equation (Four Parameter Logistic Regression)
