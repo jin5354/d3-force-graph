@@ -499,8 +499,8 @@ export class D3ForceGraph {
         case('end'): {
           this.targetPositionStatus = new Float32Array(event.data.nodes)
 
-          this.$container.addEventListener('mousemove', this.mouseMoveHandler.bind(this), false)
-          this.$container.addEventListener('mouseout', this.mouseOutHandler.bind(this), false)
+          this.$container.addEventListener('mousemove', this.mouseMoveHandlerBinded, false)
+          this.$container.addEventListener('mouseout', this.mouseOutHandlerBinded, false)
 
           // 布局结束后，如果鼠标不在图像区域，就停止渲染（节能）
           setTimeout(() => {
@@ -992,6 +992,10 @@ export class D3ForceGraph {
     this.mouseStatus.mousePosition.x = -9999
     this.mouseStatus.mousePosition.y = -9999
   }
+
+  mouseMoveHandlerBinded = this.mouseMoveHandler.bind(this)
+  mouseOutHandlerBinded = this.mouseOutHandler.bind(this)
+
   chartMouseEnterHandler(): void {
     this.mouseStatus.mouseOnChart = true
     clearTimeout(this.throttleTimer)
@@ -999,6 +1003,7 @@ export class D3ForceGraph {
     // 开启渲染
     this.startRender()
   }
+
   chartMouseLeaveHandler(): void {
     this.mouseStatus.mouseOnChart = false
     // 关闭渲染
@@ -1007,10 +1012,87 @@ export class D3ForceGraph {
     }
   }
 
+  chartMouseEnterHandlerBinded = this.chartMouseEnterHandler.bind(this)
+  chartMouseLeaveHandlerBinded = this.chartMouseLeaveHandler.bind(this)
+
   // 绑定事件
   bindEvent(): void {
-    this.$container.addEventListener('mouseenter', this.chartMouseEnterHandler.bind(this))
-    this.$container.addEventListener('mouseleave', this.chartMouseLeaveHandler.bind(this))
+    this.$container.addEventListener('mouseenter', this.chartMouseEnterHandlerBinded)
+    this.$container.addEventListener('mouseleave', this.chartMouseLeaveHandlerBinded)
+  }
+
+  // 解绑事件
+  unbindEvent(): void {
+    this.$container.removeEventListener('mouseenter', this.chartMouseEnterHandlerBinded)
+    this.$container.removeEventListener('mouseleave', this.chartMouseLeaveHandlerBinded)
+    this.$container.removeEventListener('mousemove', this.mouseMoveHandlerBinded)
+    this.$container.removeEventListener('mouseout', this.mouseOutHandlerBinded)
+  }
+
+  destroy(): void {
+    this.stopRender()
+    this.unbindEvent()
+    this.scene = null
+    this.camera = null
+    this.controls = null
+    this.renderer = null
+    this.targetPositionStatus = null
+    this.currentPositionStatus = null
+    this.cachePositionStatus = null
+    this.nodes = {
+      geometry: null,
+      positions: null,
+      scale: null,
+      material: null,
+      mesh: null
+    }
+    this.lines = {
+      geometry: null,
+      positions: null,
+      colors: null,
+      material: null,
+      mesh: null
+    }
+    this.arrows = {
+      geometry: null,
+      positions: null,
+      rotates: null,
+      material: null,
+      mesh: null
+    }
+    this.hlLines = {
+      geometry: null,
+      positions: null,
+      material: null,
+      mesh: null
+    }
+    this.hlNodes = {
+      geometry: null,
+      positions: null,
+      scale: null,
+      material: null,
+      mesh: null
+    }
+    this.hlArrows = {
+      geometry: null,
+      positions: null,
+      rotates: null,
+      material: null,
+      mesh: null
+    }
+    this.hlText = {
+      geometry: null,
+      material: null,
+      mesh: null
+    }
+    this.renderer.domElement.parentElement.removeChild(this.renderer.domElement.parentElement)
+  }
+
+  resize(width: number, height: number) {
+    this.camera.aspect = width / height
+    this.camera.updateProjectionMatrix()
+    this.renderer.setSize(width, height)
+    this.renderer.render(this.scene, this.camera)
   }
 
   // Fitting equation (Four Parameter Logistic Regression)
