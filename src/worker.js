@@ -1,3 +1,4 @@
+// use string-replace-loader to load js content
 importScripts('d3-collection/dist/d3-collection.min.js')
 importScripts('d3-dispatch/dist/d3-dispatch.min.js')
 importScripts('d3-quadtree/dist/d3-quadtree.min.js')
