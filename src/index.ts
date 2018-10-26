@@ -12,9 +12,11 @@ import * as hlNodesVS from './shaders/hlNodes.vs'
 import * as hlNodesFS from './shaders/hlNodes.fs'
 import * as hlLinesVS from './shaders/hlLines.vs'
 import * as hlLinesFS from './shaders/hlLines.fs'
+import * as hlArrowsVS from './shaders/hlArrows.vs'
+import * as hlArrowsFS from './shaders/hlArrows.fs'
 import * as worker from './worker.js'
-import arrowPNG from '../assets/arrow.png'
-import nodePNG from '../assets/node.png'
+import * as arrowPNG from '../assets/arrow.png'
+import * as nodePNG from '../assets/node.png'
 
 window.THREE = THREE
 require('three/examples/js/controls/MapControls.js')
@@ -154,6 +156,7 @@ const GRAPH_DEFAULT_PERF_INFO: GraphPerfInfo = {
 const textureLoader: THREE.TextureLoader = new THREE.TextureLoader()
 const ARROW_TEXTURE = textureLoader.load(arrowPNG)
 const NODE_TEXTURE = textureLoader.load(nodePNG)
+const BASE_HEIGHT = 500
 
 export class D3ForceGraph {
 
@@ -202,7 +205,7 @@ export class D3ForceGraph {
     material: null,
     mesh: null
   }
-  hlLine: ShaderMesh = {
+  hlLines: ShaderMesh = {
     geometry: null,
     positions: null,
     material: null,
@@ -215,7 +218,7 @@ export class D3ForceGraph {
     material: null,
     mesh: null
   }
-  hlArrow: ShaderMesh = {
+  hlArrows: ShaderMesh = {
     geometry: null,
     positions: null,
     rotates: null,
@@ -365,6 +368,9 @@ export class D3ForceGraph {
         texture: {
           type: 't',
           value: NODE_TEXTURE
+        },
+        'u_compensation': {
+          value: window.devicePixelRatio * this.config.height / BASE_HEIGHT
         }
       },
       vertexShader: nodesVS,
@@ -584,6 +590,9 @@ export class D3ForceGraph {
         texture: {
           type: 't',
           value: ARROW_TEXTURE
+        },
+        'u_compensation': {
+          value: window.devicePixelRatio * this.config.height / BASE_HEIGHT
         }
       },
       vertexShader: arrowsVS,
@@ -592,7 +601,7 @@ export class D3ForceGraph {
 
     let vec: v3.Vector3 = new v3.Vector3(0, 1, 0)
     let up: v3.Vector3 = new v3.Vector3(0, 1, 0)
-    let offsetDistance = 2.9
+    let offsetDistance = 3.8
 
     this.processedData.links.forEach((e, i) => {
 
@@ -727,6 +736,12 @@ export class D3ForceGraph {
           texture: {
             type: 't',
             value: info.imageTexture
+          },
+          'u_compensation': {
+            value: window.devicePixelRatio * this.config.height / BASE_HEIGHT
+          },
+          scale: {
+            value: info.scale || 1
           }
         },
         vertexShader: imageVS,
@@ -839,6 +854,9 @@ export class D3ForceGraph {
         texture: {
           type: 't',
           value: NODE_TEXTURE
+        },
+        'u_compensation': {
+          value: window.devicePixelRatio * this.config.height / BASE_HEIGHT
         }
       },
       vertexShader: hlNodesVS,
@@ -860,48 +878,51 @@ export class D3ForceGraph {
     this.hlNodes.mesh.name = 'hlNodes'
     this.scene.add(this.hlNodes.mesh)
 
-    this.hlLine.geometry = new THREE.BufferGeometry()
-    this.hlLine.positions = new Float32Array(links.length * 6)
-    this.hlLine.material = new THREE.ShaderMaterial({
+    this.hlLines.geometry = new THREE.BufferGeometry()
+    this.hlLines.positions = new Float32Array(links.length * 6)
+    this.hlLines.material = new THREE.ShaderMaterial({
       opacity: 0.6,
       vertexShader: hlLinesVS,
       fragmentShader: hlLinesFS
     })
 
     links.forEach((e, i) => {
-      this.hlLine.positions[i * 6] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.source].index * 2]
-      this.hlLine.positions[i * 6 + 1] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.source].index * 2 + 1]
-      this.hlLine.positions[i * 6 + 2] = -0.09
-      this.hlLine.positions[i * 6 + 3] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.target].index * 2]
-      this.hlLine.positions[i * 6 + 4] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.target].index * 2 + 1]
-      this.hlLine.positions[i * 6 + 5] = -0.09
+      this.hlLines.positions[i * 6] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.source].index * 2]
+      this.hlLines.positions[i * 6 + 1] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.source].index * 2 + 1]
+      this.hlLines.positions[i * 6 + 2] = -0.09
+      this.hlLines.positions[i * 6 + 3] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.target].index * 2]
+      this.hlLines.positions[i * 6 + 4] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.target].index * 2 + 1]
+      this.hlLines.positions[i * 6 + 5] = -0.09
     })
 
-    this.hlLine.geometry.addAttribute('position', new THREE.BufferAttribute(this.hlLine.positions, 3))
-    this.hlLine.geometry.computeBoundingSphere()
+    this.hlLines.geometry.addAttribute('position', new THREE.BufferAttribute(this.hlLines.positions, 3))
+    this.hlLines.geometry.computeBoundingSphere()
 
-    this.hlLine.mesh = new THREE.LineSegments(this.hlLine.geometry, this.hlLine.material)
-    this.hlLine.mesh.name = 'hlLine'
-    this.scene.add(this.hlLine.mesh)
+    this.hlLines.mesh = new THREE.LineSegments(this.hlLines.geometry, this.hlLines.material)
+    this.hlLines.mesh.name = 'hlLines'
+    this.scene.add(this.hlLines.mesh)
 
-    this.hlArrow.geometry = new THREE.BufferGeometry()
-    this.hlArrow.positions = new Float32Array(links.length * 3)
-    this.hlArrow.rotates = new Float32Array(links.length)
+    this.hlArrows.geometry = new THREE.BufferGeometry()
+    this.hlArrows.positions = new Float32Array(links.length * 3)
+    this.hlArrows.rotates = new Float32Array(links.length)
 
-    this.hlArrow.material = new THREE.ShaderMaterial({
+    this.hlArrows.material = new THREE.ShaderMaterial({
       uniforms: {
         texture: {
           type: 't',
           value: ARROW_TEXTURE
+        },
+        'u_compensation': {
+          value: window.devicePixelRatio * this.config.height / BASE_HEIGHT
         }
       },
-      vertexShader: ``,
-      fragmentShader: ``
+      vertexShader: hlArrowsVS,
+      fragmentShader: hlArrowsFS
     })
 
     let vec = new v3.Vector3(0, 1, 0)
     let up = new v3.Vector3(0, 1, 0)
-    let offsetDistance = 2.9
+    let offsetDistance = 3.8
 
     links.forEach((e, i) => {
 
@@ -917,19 +938,19 @@ export class D3ForceGraph {
       if(vecX < 0) {
         angle = 2 * Math.PI - angle
       }
-      this.hlArrow.rotates[i] = angle
+      this.hlArrows.rotates[i] = angle
 
-      this.hlArrow.positions[i * 3] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.target].index * 2] - offsetX
-      this.hlArrow.positions[i * 3 + 1] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.target].index * 2 + 1] - offsetY
-      this.hlArrow.positions[i * 3 + 2] = -0.04
+      this.hlArrows.positions[i * 3] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.target].index * 2] - offsetX
+      this.hlArrows.positions[i * 3 + 1] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.target].index * 2 + 1] - offsetY
+      this.hlArrows.positions[i * 3 + 2] = -0.04
     })
 
-    this.hlArrow.geometry.addAttribute('position', new THREE.BufferAttribute(this.hlArrow.positions, 3))
-    this.hlArrow.geometry.addAttribute('rotate', new THREE.BufferAttribute(this.hlArrow.rotates, 1))
-    this.hlArrow.geometry.computeBoundingSphere()
-    this.hlArrow.mesh = new THREE.Points(this.hlArrow.geometry, this.hlArrow.material)
-    this.hlArrow.mesh.name = 'hlArrow'
-    this.scene.add(this.hlArrow.mesh)
+    this.hlArrows.geometry.addAttribute('position', new THREE.BufferAttribute(this.hlArrows.positions, 3))
+    this.hlArrows.geometry.addAttribute('rotate', new THREE.BufferAttribute(this.hlArrows.rotates, 1))
+    this.hlArrows.geometry.computeBoundingSphere()
+    this.hlArrows.mesh = new THREE.Points(this.hlArrows.geometry, this.hlArrows.material)
+    this.hlArrows.mesh.name = 'hlArrows'
+    this.scene.add(this.hlArrows.mesh)
 
     let canvas1 = document.createElement('canvas')
     let context1 = canvas1.getContext('2d')

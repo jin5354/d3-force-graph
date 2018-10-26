@@ -17,4 +17,7 @@ declare module '*worker.js' {
   const content: string
   export = content
 }
-declare module '*.png'
+declare module '*.png' {
+  const content: string
+  export = content
+}
