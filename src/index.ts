@@ -17,11 +17,14 @@ import * as hlArrowsFS from './shaders/hlArrows.fs'
 import * as worker from './worker.js'
 import * as arrowPNG from '../assets/arrow.png'
 import * as nodePNG from '../assets/node.png'
+import mitt from 'mitt'
+
+import './index.css'
 
 window.THREE = THREE
 require('three/examples/js/controls/MapControls.js')
 
-type RGBA = [number, number, number, number]
+type RGB = [number, number, number]
 
 interface GraphData {
   nodes: Array<{
@@ -33,7 +36,7 @@ interface GraphData {
   links: Array<{
     source: string,
     target: string,
-    color?: RGBA
+    color?: RGB
   }>
 }
 
@@ -43,10 +46,12 @@ interface GraphBaseConfig {
   nodeSize?: number,
   lineWidth?: number,
   showArrow?: boolean,
-  highLightColor?: RGBA,
+  highLightColor?: RGB,
   showStatTable?: boolean,
   showHUD?: boolean,
-  roundedImage?: boolean
+  roundedImage?: boolean,
+  zoomNear?: number,
+  zoomFar?: number
 }
 
 interface D3ForceData {
@@ -74,7 +79,7 @@ interface ProcessedData extends D3ForceData {
   },
   linkInfoMap: {
     [key: string]: {
-      color?: RGBA
+      color?: RGB
     }
   },
   linkBuffer: Int32Array,
@@ -111,7 +116,6 @@ interface GraphPerfInfo {
 }
 
 interface MouseStatus {
-  mouseOnTable: boolean,
   mouseOnChart: boolean,
   mousePosition: THREE.Vector2
 }
@@ -135,10 +139,12 @@ const GRAPH_BASE_CONFIG: GraphBaseConfig = {
   nodeSize: 20,
   lineWidth: 1,
   showArrow: true,
-  highLightColor: [255, 0, 0, 0.6],
+  highLightColor: [255, 0, 0],
   showStatTable: true,
   showHUD: true,
-  roundedImage: true
+  roundedImage: true,
+  zoomNear: 75,
+  zoomFar: 16000
 }
 
 const GRAPH_DEFAULT_PERF_INFO: GraphPerfInfo = {
@@ -171,13 +177,14 @@ export class D3ForceGraph {
   currentPositionStatus: Float32Array
   cachePositionStatus: Float32Array
   mouseStatus: MouseStatus = {
-    mouseOnTable: false,
     mouseOnChart: false,
     mousePosition: new THREE.Vector2(-9999, -9999)
   }
   rafId: number
   highlighted: string
   throttleTimer: number
+  events: mitt.Emitter
+  lockHighlightToken: false
 
   scene: THREE.Scene
   renderer: THREE.WebGLRenderer
@@ -236,6 +243,7 @@ export class D3ForceGraph {
     this.data = data
     this.config = Object.assign({}, GRAPH_BASE_CONFIG, graphBaseConfig)
     this.perfInfo = GRAPH_DEFAULT_PERF_INFO
+    this.events = new mitt()
 
     this.init()
   }
@@ -245,7 +253,7 @@ export class D3ForceGraph {
       this.processedData = this.preProcessData()
       this.perfInfo.nodeCounts = this.processedData.nodes.length
       this.perfInfo.linkCounts = this.processedData.links.length
-
+      console.log(this.processedData)
       this.prepareScene()
       this.prepareBasicMesh()
       this.installControls()
@@ -306,7 +314,7 @@ export class D3ForceGraph {
         })
         linkBuffer.push(result.nodeInfoMap[e.source].index, result.nodeInfoMap[e.target].index)
         result.linkInfoMap[linkInfoKey] = {
-          color: e.color
+          color: e.color && e.color.map(e => e / 255) as RGB
         }
         linkCountMap[e.source] = (linkCountMap[e.source] || 0) + 1
       }
@@ -346,18 +354,19 @@ export class D3ForceGraph {
     this.camera.updateProjectionMatrix()
     this.renderer.render(this.scene, this.camera)
     this.containerRect = this.$container.getBoundingClientRect()
+    this.$container.classList.add('d3-force-graph-container')
   }
 
   prepareBasicMesh(): void {
     // 预准备节点与线，使用BufferGeometry，位置先定到-9999
     // z 关系
-    // 高亮节点：0.01
-    // 头像：0.005
+    // 高亮节点：0.0001
+    // 头像：0.00005
     // 节点: 0
-    // 高亮箭头：-0.04
-    // 箭头：-0.05
-    // 高亮线：-0.09
-    // 线：-0.1
+    // 高亮箭头：-0.0004
+    // 箭头：-0.0007
+    // 高亮线：-0.0009
+    // 线：-0.001
     this.perfInfo.layoutStartTime = Date.now()
 
     this.nodes.geometry = new THREE.BufferGeometry()
@@ -406,10 +415,10 @@ export class D3ForceGraph {
     this.processedData.links.forEach((e, i) => {
       this.lines.positions[i * 6] = -9999
       this.lines.positions[i * 6 + 1] = -9999
-      this.lines.positions[i * 6 + 2] = -0.1
+      this.lines.positions[i * 6 + 2] = -0.001
       this.lines.positions[i * 6 + 3] = -9999
       this.lines.positions[i * 6 + 4] = -9999
-      this.lines.positions[i * 6 + 5] = -0.1
+      this.lines.positions[i * 6 + 5] = -0.001
 
       if(this.processedData.linkInfoMap[`${e.source}-${e.target}`].color) {
         this.lines.colors[i * 6] = this.processedData.linkInfoMap[`${e.source}-${e.target}`].color[0]
@@ -494,6 +503,10 @@ export class D3ForceGraph {
             this.perfInfo.targetTick = event.data.currentTick
           }
 
+          this.events.emit('tick', {
+            layoutProgress: this.perfInfo.layoutProgress
+          })
+
           break
         }
         case('end'): {
@@ -507,8 +520,10 @@ export class D3ForceGraph {
             this.perfInfo.layouting = false
             this.renderArrow()
 
+            this.events.emit('end')
+
             setTimeout(() => {
-              if(!this.mouseStatus.mouseOnChart && !this.mouseStatus.mouseOnTable) {
+              if(!this.mouseStatus.mouseOnChart) {
                 this.stopRender()
               }
             }, 2000)
@@ -545,11 +560,11 @@ export class D3ForceGraph {
   render(): void {
     this.rafId = null
     // 限制放大缩小距离，最近75，最远16000
-    if(this.camera.position.z < 75) {
-      this.camera.position.set(this.camera.position.x, this.camera.position.y, 75)
+    if(this.camera.position.z < this.config.zoomNear) {
+      this.camera.position.set(this.camera.position.x, this.camera.position.y, this.config.zoomNear)
     }
-    if(this.camera.position.z > 16000) {
-      this.camera.position.set(this.camera.position.x, this.camera.position.y, 16000)
+    if(this.camera.position.z > this.config.zoomFar) {
+      this.camera.position.set(this.camera.position.x, this.camera.position.y, this.config.zoomFar)
     }
     // 节点数大于1000时，执行补间动画
     if(this.perfInfo.nodeCounts > 1000) {
@@ -567,8 +582,10 @@ export class D3ForceGraph {
         this.updatePosition(this.currentPositionStatus)
       }
     }else {
-      this.currentPositionStatus = this.targetPositionStatus
-      this.updatePosition(this.currentPositionStatus)
+      if(this.currentPositionStatus[0] !== this.targetPositionStatus[0]) {
+        this.currentPositionStatus = this.targetPositionStatus
+        this.updatePosition(this.currentPositionStatus)
+      }
     }
     this.updateHighLight()
     if(!this.perfInfo.layouting && this.camera.position.z < 300) {
@@ -622,7 +639,7 @@ export class D3ForceGraph {
 
       this.arrows.positions[i * 3] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.target].index * 2] - offsetX
       this.arrows.positions[i * 3 + 1] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.target].index * 2 + 1] - offsetY
-      this.arrows.positions[i * 3 + 2] = -0.05
+      this.arrows.positions[i * 3 + 2] = -0.0007
     })
 
     this.arrows.geometry.addAttribute('position', new THREE.BufferAttribute(this.arrows.positions, 3))
@@ -674,7 +691,7 @@ export class D3ForceGraph {
         this.highlight(id)
       }
     }else {
-      if(!this.mouseStatus.mouseOnTable) {
+      if(!this.lockHighlightToken) {
         this.unhighlight()
       }
     }
@@ -717,10 +734,9 @@ export class D3ForceGraph {
           }
         }
         console.log(`同屏节点${nodes.length}个，游客${nullc}个，自定义头像${havec}个`)
+        clearTimeout(this.throttleTimer)
         this.throttleTimer = null
       }, 1000)
-    }else {
-      console.log('wait timer 执行')
     }
   }
   generateAvaPoint(info: ProcessedData['nodeInfoMap']['key'], id: string, x: number, y: number): void {
@@ -728,7 +744,7 @@ export class D3ForceGraph {
       info.imagePoint = {
         geometry: null,
         material: null,
-        positions: new Float32Array([x, y, 0.005]),
+        positions: new Float32Array([x, y, 0.00005]),
         mesh: null
       }
       info.imagePoint.geometry = new THREE.BufferGeometry()
@@ -833,11 +849,11 @@ export class D3ForceGraph {
     this.scene.remove(text)
     this.scene.remove(arrow)
     this.highlighted = null
+    this.$container.classList.remove('hl')
   }
 
   // 根据 id 高亮节点
   addHighLight(sourceId: string): void {
-
     // console.log(sourceId, this.processedData.nodeInfoMap[sourceId].ava)
     let sourceNode = this.processedData.nodes.find(e => e.id === sourceId)
     let links = this.processedData.links.filter(e => (e.source === sourceId || e.target === sourceId))
@@ -867,7 +883,7 @@ export class D3ForceGraph {
     targetNodes.forEach((e, i) => {
       this.hlNodes.positions[i * 3] = this.currentPositionStatus[this.processedData.nodeInfoMap[e].index * 2]
       this.hlNodes.positions[i * 3 + 1] = this.currentPositionStatus[this.processedData.nodeInfoMap[e].index * 2 + 1]
-      this.hlNodes.positions[i * 3 + 2] = 0.01
+      this.hlNodes.positions[i * 3 + 2] = 0.0001
       this.hlNodes.scale[i] = this.processedData.nodeInfoMap[e].scale || 1
     })
 
@@ -890,10 +906,10 @@ export class D3ForceGraph {
     links.forEach((e, i) => {
       this.hlLines.positions[i * 6] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.source].index * 2]
       this.hlLines.positions[i * 6 + 1] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.source].index * 2 + 1]
-      this.hlLines.positions[i * 6 + 2] = -0.09
+      this.hlLines.positions[i * 6 + 2] = -0.0009
       this.hlLines.positions[i * 6 + 3] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.target].index * 2]
       this.hlLines.positions[i * 6 + 4] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.target].index * 2 + 1]
-      this.hlLines.positions[i * 6 + 5] = -0.09
+      this.hlLines.positions[i * 6 + 5] = -0.0009
     })
 
     this.hlLines.geometry.addAttribute('position', new THREE.BufferAttribute(this.hlLines.positions, 3))
@@ -943,7 +959,7 @@ export class D3ForceGraph {
 
       this.hlArrows.positions[i * 3] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.target].index * 2] - offsetX
       this.hlArrows.positions[i * 3 + 1] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.target].index * 2 + 1] - offsetY
-      this.hlArrows.positions[i * 3 + 2] = -0.04
+      this.hlArrows.positions[i * 3 + 2] = -0.0004
     })
 
     this.hlArrows.geometry.addAttribute('position', new THREE.BufferAttribute(this.hlArrows.positions, 3))
@@ -980,6 +996,8 @@ export class D3ForceGraph {
     this.hlText.mesh.position.set(fontMeshPosition[0], fontMeshPosition[1], 0)
     this.hlText.mesh.name = 'hlText'
     this.scene.add(this.hlText.mesh)
+
+    this.$container.classList.add('hl')
   }
 
   mouseMoveHandler(event: MouseEvent): void {
@@ -1007,7 +1025,7 @@ export class D3ForceGraph {
   chartMouseLeaveHandler(): void {
     this.mouseStatus.mouseOnChart = false
     // 关闭渲染
-    if(!this.perfInfo.layouting) {
+    if(!this.perfInfo.layouting && !this.lockHighlightToken) {
       this.stopRender()
     }
   }
@@ -1035,7 +1053,6 @@ export class D3ForceGraph {
     this.scene = null
     this.camera = null
     this.controls = null
-    this.renderer = null
     this.targetPositionStatus = null
     this.currentPositionStatus = null
     this.cachePositionStatus = null
@@ -1085,7 +1102,8 @@ export class D3ForceGraph {
       material: null,
       mesh: null
     }
-    this.renderer.domElement.parentElement.removeChild(this.renderer.domElement.parentElement)
+    this.renderer.domElement.parentElement.removeChild(this.renderer.domElement)
+    this.renderer = null
   }
 
   resize(width: number, height: number) {
