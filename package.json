@@ -1,6 +1,6 @@
 {
   "name": "d3-force-graph",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "d3-force-graph",
   "main": "dist/d3-force-graph.js",
   "typings": "dist/d3-force-graph.d.ts",
