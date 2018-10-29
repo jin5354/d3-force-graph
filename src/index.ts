@@ -518,7 +518,9 @@ export class D3ForceGraph {
           // 布局结束后，如果鼠标不在图像区域，就停止渲染（节能）
           setTimeout(() => {
             this.perfInfo.layouting = false
-            this.renderArrow()
+            if(this.config.showArrow) {
+              this.renderArrow()
+            }
 
             this.events.emit('end')
 
@@ -843,11 +845,13 @@ export class D3ForceGraph {
     let node = this.scene.getObjectByName('hlNodes')
     let line = this.scene.getObjectByName('hlLines')
     let text = this.scene.getObjectByName('hlText')
-    let arrow = this.scene.getObjectByName('hlArrows')
     this.scene.remove(node)
     this.scene.remove(line)
     this.scene.remove(text)
-    this.scene.remove(arrow)
+    if(this.config.showArrow) {
+      let arrow = this.scene.getObjectByName('hlArrows')
+      this.scene.remove(arrow)
+    }
     this.highlighted = null
     this.$container.classList.remove('hl')
   }
@@ -919,55 +923,57 @@ export class D3ForceGraph {
     this.hlLines.mesh.name = 'hlLines'
     this.scene.add(this.hlLines.mesh)
 
-    this.hlArrows.geometry = new THREE.BufferGeometry()
-    this.hlArrows.positions = new Float32Array(links.length * 3)
-    this.hlArrows.rotates = new Float32Array(links.length)
+    if(this.config.showArrow) {
+      this.hlArrows.geometry = new THREE.BufferGeometry()
+      this.hlArrows.positions = new Float32Array(links.length * 3)
+      this.hlArrows.rotates = new Float32Array(links.length)
 
-    this.hlArrows.material = new THREE.ShaderMaterial({
-      uniforms: {
-        texture: {
-          type: 't',
-          value: ARROW_TEXTURE
+      this.hlArrows.material = new THREE.ShaderMaterial({
+        uniforms: {
+          texture: {
+            type: 't',
+            value: ARROW_TEXTURE
+          },
+          'u_compensation': {
+            value: window.devicePixelRatio * this.config.height / BASE_HEIGHT
+          }
         },
-        'u_compensation': {
-          value: window.devicePixelRatio * this.config.height / BASE_HEIGHT
+        vertexShader: hlArrowsVS,
+        fragmentShader: hlArrowsFS
+      })
+
+      let vec = new v3.Vector3(0, 1, 0)
+      let up = new v3.Vector3(0, 1, 0)
+      let offsetDistance = 3.8
+
+      links.forEach((e, i) => {
+
+        // 计算箭头的旋转方向与偏移位置
+        let vecX = this.currentPositionStatus[this.processedData.nodeInfoMap[e.target].index * 2] - this.currentPositionStatus[this.processedData.nodeInfoMap[e.source].index * 2]
+        let vecY = this.currentPositionStatus[this.processedData.nodeInfoMap[e.target].index * 2 + 1] - this.currentPositionStatus[this.processedData.nodeInfoMap[e.source].index * 2 + 1]
+        vec.x = vecX
+        vec.y = vecY
+        let angle = v3.Vector3.getAngle(vec, up)
+        let vecNorm = v3.Vector3.getNorm(vec)
+        let offsetX = vecX * offsetDistance / vecNorm
+        let offsetY = vecY * offsetDistance / vecNorm
+        if(vecX < 0) {
+          angle = 2 * Math.PI - angle
         }
-      },
-      vertexShader: hlArrowsVS,
-      fragmentShader: hlArrowsFS
-    })
+        this.hlArrows.rotates[i] = angle
 
-    let vec = new v3.Vector3(0, 1, 0)
-    let up = new v3.Vector3(0, 1, 0)
-    let offsetDistance = 3.8
+        this.hlArrows.positions[i * 3] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.target].index * 2] - offsetX
+        this.hlArrows.positions[i * 3 + 1] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.target].index * 2 + 1] - offsetY
+        this.hlArrows.positions[i * 3 + 2] = -0.0004
+      })
 
-    links.forEach((e, i) => {
-
-      // 计算箭头的旋转方向与偏移位置
-      let vecX = this.currentPositionStatus[this.processedData.nodeInfoMap[e.target].index * 2] - this.currentPositionStatus[this.processedData.nodeInfoMap[e.source].index * 2]
-      let vecY = this.currentPositionStatus[this.processedData.nodeInfoMap[e.target].index * 2 + 1] - this.currentPositionStatus[this.processedData.nodeInfoMap[e.source].index * 2 + 1]
-      vec.x = vecX
-      vec.y = vecY
-      let angle = v3.Vector3.getAngle(vec, up)
-      let vecNorm = v3.Vector3.getNorm(vec)
-      let offsetX = vecX * offsetDistance / vecNorm
-      let offsetY = vecY * offsetDistance / vecNorm
-      if(vecX < 0) {
-        angle = 2 * Math.PI - angle
-      }
-      this.hlArrows.rotates[i] = angle
-
-      this.hlArrows.positions[i * 3] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.target].index * 2] - offsetX
-      this.hlArrows.positions[i * 3 + 1] = this.currentPositionStatus[this.processedData.nodeInfoMap[e.target].index * 2 + 1] - offsetY
-      this.hlArrows.positions[i * 3 + 2] = -0.0004
-    })
-
-    this.hlArrows.geometry.addAttribute('position', new THREE.BufferAttribute(this.hlArrows.positions, 3))
-    this.hlArrows.geometry.addAttribute('rotate', new THREE.BufferAttribute(this.hlArrows.rotates, 1))
-    this.hlArrows.geometry.computeBoundingSphere()
-    this.hlArrows.mesh = new THREE.Points(this.hlArrows.geometry, this.hlArrows.material)
-    this.hlArrows.mesh.name = 'hlArrows'
-    this.scene.add(this.hlArrows.mesh)
+      this.hlArrows.geometry.addAttribute('position', new THREE.BufferAttribute(this.hlArrows.positions, 3))
+      this.hlArrows.geometry.addAttribute('rotate', new THREE.BufferAttribute(this.hlArrows.rotates, 1))
+      this.hlArrows.geometry.computeBoundingSphere()
+      this.hlArrows.mesh = new THREE.Points(this.hlArrows.geometry, this.hlArrows.material)
+      this.hlArrows.mesh.name = 'hlArrows'
+      this.scene.add(this.hlArrows.mesh)
+    }
 
     let canvas1 = document.createElement('canvas')
     let context1 = canvas1.getContext('2d')
