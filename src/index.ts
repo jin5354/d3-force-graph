@@ -253,7 +253,7 @@ export class D3ForceGraph {
       this.processedData = this.preProcessData()
       this.perfInfo.nodeCounts = this.processedData.nodes.length
       this.perfInfo.linkCounts = this.processedData.links.length
-      console.log(this.processedData)
+
       this.prepareScene()
       this.prepareBasicMesh()
       this.installControls()
@@ -1114,8 +1114,9 @@ export class D3ForceGraph {
 
   resize(width: number, height: number) {
     this.camera.aspect = width / height
-    this.config.width = width
-    this.config.height = height
+    // todo: rerender basic mesh
+    // this.config.width = width
+    // this.config.height = height
     this.camera.updateProjectionMatrix()
     this.renderer.setSize(width, height)
     this.renderer.render(this.scene, this.camera)
