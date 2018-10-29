@@ -1114,6 +1114,8 @@ export class D3ForceGraph {
 
   resize(width: number, height: number) {
     this.camera.aspect = width / height
+    this.config.width = width
+    this.config.height = height
     this.camera.updateProjectionMatrix()
     this.renderer.setSize(width, height)
     this.renderer.render(this.scene, this.camera)
