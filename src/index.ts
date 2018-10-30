@@ -597,7 +597,7 @@ export class D3ForceGraph {
   }
 
   checkFinalStatus() {
-    if(!this.perfInfo.layouting && (this.currentPositionStatus[0] !== this.targetPositionStatus[0])){
+    if(!this.perfInfo.layouting && this.currentPositionStatus && (this.currentPositionStatus[0] !== this.targetPositionStatus[0])){
       this.currentPositionStatus = this.targetPositionStatus
       this.updatePosition(this.currentPositionStatus)
     }
