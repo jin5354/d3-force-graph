@@ -3,6 +3,7 @@ uniform float u_compensation;
 
 void main() {
   vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-  gl_PointSize = 3025.0 * u_compensation * scale / (cameraPosition.z - position.z);
+  vec3 distanceVector = cameraPosition - position;
+  gl_PointSize = 3025.0 * u_compensation * scale / sqrt(dot(distanceVector, distanceVector));
   gl_Position = projectionMatrix * mvPosition;
 }
