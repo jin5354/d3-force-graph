@@ -51,7 +51,8 @@ interface GraphBaseConfig {
   showHUD?: boolean,
   roundedImage?: boolean,
   zoomNear?: number,
-  zoomFar?: number
+  zoomFar?: number,
+  debug?: boolean
 }
 
 interface D3ForceData {
@@ -144,7 +145,8 @@ const GRAPH_BASE_CONFIG: GraphBaseConfig = {
   showHUD: true,
   roundedImage: true,
   zoomNear: 75,
-  zoomFar: 16000
+  zoomFar: 16000,
+  debug: false
 }
 
 const GRAPH_DEFAULT_PERF_INFO: GraphPerfInfo = {
@@ -476,7 +478,6 @@ export class D3ForceGraph {
           this.perfInfo.layoutPastTime = now - this.perfInfo.layoutStartTime
 
           this.perfInfo.intervalTime = now - (this.perfInfo.prevTickTime || now)
-          // console.log(`计算间隔时间${this.intervalTime}, 当期时刻${now - this.perfInfo.layoutStartTime}, 上个tick时刻${this.prevTickTime}`)
           this.perfInfo.prevTickTime = now
 
           if(event.data.currentTick === 1) {
@@ -572,7 +573,6 @@ export class D3ForceGraph {
     if(this.perfInfo.nodeCounts > 1000) {
       let now = Date.now()
       let stepTime = now - this.perfInfo.prevTickTime
-      // console.log(`开始准备渲染, 当前渲染时间点${now - this.perf.layoutStartTime}, 当前tick${this.targetTick}更新时间点${this.prevTickTime - this.perf.layoutStartTime}, 间隔${this.intervalTime}, 理论进度${stepTime/this.intervalTime}`)
       if(stepTime <= this.perfInfo.intervalTime) {
         for(let i = 0; i < this.currentPositionStatus.length; i++) {
           this.currentPositionStatus[i] = (this.targetPositionStatus[i] - this.cachePositionStatus[i]) / this.perfInfo.intervalTime * stepTime + this.cachePositionStatus[i]
@@ -707,7 +707,6 @@ export class D3ForceGraph {
     // 节流
     if(!this.throttleTimer) {
       this.throttleTimer = window.setTimeout(() => {
-        // console.log('timer 执行')
         if(this.camera.position.z > 300) {
           return
         }
@@ -739,7 +738,7 @@ export class D3ForceGraph {
             this.generateAvaPoint(info, id, x, y)
           }
         }
-        console.log(`同屏节点${nodes.length}个，游客${nullc}个，自定义头像${havec}个`)
+        this.config.debug && console.log(`同屏节点${nodes.length}个，游客${nullc}个，自定义头像${havec}个`)
         clearTimeout(this.throttleTimer)
         this.throttleTimer = null
       }, 1000)
@@ -780,7 +779,7 @@ export class D3ForceGraph {
     }
     if(!this.scene.getObjectByName(`ava-${id}`)) {
       this.scene.add(info.imagePoint.mesh)
-      console.log('loadImage:', id)
+      this.config.debug && console.log('loadImage:', id)
     }
   }
   // 获取当前 viewport 下所以可视的节点
@@ -862,7 +861,6 @@ export class D3ForceGraph {
 
   // 根据 id 高亮节点
   addHighLight(sourceId: string): void {
-    // console.log(sourceId, this.processedData.nodeInfoMap[sourceId].ava)
     let sourceNode = this.processedData.nodes.find(e => e.id === sourceId)
     let links = this.processedData.links.filter(e => (e.source === sourceId || e.target === sourceId))
     let targetNodes = links.map(e => {
