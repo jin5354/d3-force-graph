@@ -579,16 +579,13 @@ export class D3ForceGraph {
         }
         this.updatePosition(this.currentPositionStatus)
       }
-      if(!this.perfInfo.layouting && (this.currentPositionStatus[0] !== this.targetPositionStatus[0])){
-        this.currentPositionStatus = this.targetPositionStatus
-        this.updatePosition(this.currentPositionStatus)
-      }
     }else {
-      if(this.currentPositionStatus[0] !== this.targetPositionStatus[0]) {
+      if(this.currentPositionStatus && this.currentPositionStatus[0] !== this.targetPositionStatus[0]) {
         this.currentPositionStatus = this.targetPositionStatus
         this.updatePosition(this.currentPositionStatus)
       }
     }
+    this.checkFinalStatus()
     this.updateHighLight()
     if(!this.perfInfo.layouting && this.camera.position.z < 300) {
       // todo 智能卸载
@@ -597,6 +594,13 @@ export class D3ForceGraph {
     this.renderer.render(this.scene, this.camera)
     this.controls && this.controls.update()
     this.startRender()
+  }
+
+  checkFinalStatus() {
+    if(!this.perfInfo.layouting && (this.currentPositionStatus[0] !== this.targetPositionStatus[0])){
+      this.currentPositionStatus = this.targetPositionStatus
+      this.updatePosition(this.currentPositionStatus)
+    }
   }
 
   renderArrow(): void {
