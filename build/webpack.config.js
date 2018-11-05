@@ -33,7 +33,11 @@ module.exports = {
       },
       {
         test: /\.(vs|fs)$/,
-        use: 'raw-loader'
+        use: [
+          {
+            loader: path.join(__dirname, './glsl-loader.js')
+          }
+        ]
       },
       {
         test: /worker\.js$/,

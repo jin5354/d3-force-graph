@@ -44,6 +44,7 @@ interface GraphBaseConfig {
   width: number,
   height: number,
   nodeSize?: number,
+  arrowSize?: number,
   lineWidth?: number,
   showArrow?: boolean,
   highLightColor?: RGB,
@@ -137,7 +138,8 @@ interface VisibleNode {
 const GRAPH_BASE_CONFIG: GraphBaseConfig = {
   width: 400,
   height: 400,
-  nodeSize: 20,
+  nodeSize: 3000,
+  arrowSize: 1250,
   lineWidth: 1,
   showArrow: true,
   highLightColor: [255, 0, 0],
@@ -363,11 +365,11 @@ export class D3ForceGraph {
     // 预准备节点与线，使用BufferGeometry，位置先定到-9999
     // z 关系
     // 高亮节点：0.0001
+    // 高亮箭头：-0.0004
+    // 高亮线：-0.0009
     // 头像：0.00005
     // 节点: 0
-    // 高亮箭头：-0.0004
     // 箭头：-0.0007
-    // 高亮线：-0.0009
     // 线：-0.001
     this.perfInfo.layoutStartTime = Date.now()
 
@@ -385,8 +387,10 @@ export class D3ForceGraph {
           value: window.devicePixelRatio * this.config.height / BASE_HEIGHT
         }
       },
-      vertexShader: nodesVS,
-      fragmentShader: nodesFS
+      vertexShader: nodesVS({
+        nodeSize: this.config.nodeSize.toFixed(8)
+      }),
+      fragmentShader: nodesFS()
     })
 
     this.processedData.nodes.forEach((e, i) => {
@@ -410,8 +414,8 @@ export class D3ForceGraph {
     this.lines.material = new THREE.ShaderMaterial({
       transparent: true,
       opacity: 0.6,
-      vertexShader: linesVS,
-      fragmentShader: linesFS
+      vertexShader: linesVS(),
+      fragmentShader: linesFS()
     })
 
     this.processedData.links.forEach((e, i) => {
@@ -619,13 +623,15 @@ export class D3ForceGraph {
           value: window.devicePixelRatio * this.config.height / BASE_HEIGHT
         }
       },
-      vertexShader: arrowsVS,
-      fragmentShader: arrowsFS
+      vertexShader: arrowsVS({
+        arrowSize: this.config.arrowSize.toFixed(8)
+      }),
+      fragmentShader: arrowsFS()
     })
 
     let vec: v3.Vector3 = new v3.Vector3(0, 1, 0)
     let up: v3.Vector3 = new v3.Vector3(0, 1, 0)
-    let offsetDistance = 3.8
+    let offsetDistance = (this.config.arrowSize + this.config.nodeSize) / 1125
 
     this.processedData.links.forEach((e, i) => {
 
@@ -766,8 +772,10 @@ export class D3ForceGraph {
             value: info.scale || 1
           }
         },
-        vertexShader: imageVS,
-        fragmentShader: imageFS
+        vertexShader: imageVS({
+          nodeSize: (this.config.nodeSize.toFixed(8))
+        }),
+        fragmentShader: imageFS()
       })
 
       info.imagePoint.geometry.addAttribute('position', new THREE.BufferAttribute(info.imagePoint.positions, 3))
@@ -882,8 +890,10 @@ export class D3ForceGraph {
           value: window.devicePixelRatio * this.config.height / BASE_HEIGHT
         }
       },
-      vertexShader: hlNodesVS,
-      fragmentShader: hlNodesFS
+      vertexShader: hlNodesVS({
+        nodeSize: (this.config.nodeSize + 25).toFixed(8)
+      }),
+      fragmentShader: hlNodesFS()
     })
 
     targetNodes.forEach((e, i) => {
@@ -905,8 +915,8 @@ export class D3ForceGraph {
     this.hlLines.positions = new Float32Array(links.length * 6)
     this.hlLines.material = new THREE.ShaderMaterial({
       opacity: 0.6,
-      vertexShader: hlLinesVS,
-      fragmentShader: hlLinesFS
+      vertexShader: hlLinesVS(),
+      fragmentShader: hlLinesFS()
     })
 
     links.forEach((e, i) => {
@@ -940,13 +950,15 @@ export class D3ForceGraph {
             value: window.devicePixelRatio * this.config.height / BASE_HEIGHT
           }
         },
-        vertexShader: hlArrowsVS,
-        fragmentShader: hlArrowsFS
+        vertexShader: hlArrowsVS({
+          arrowSize: (this.config.arrowSize + 25).toFixed(8)
+        }),
+        fragmentShader: hlArrowsFS()
       })
 
       let vec = new v3.Vector3(0, 1, 0)
       let up = new v3.Vector3(0, 1, 0)
-      let offsetDistance = 3.8
+      let offsetDistance = (this.config.arrowSize + this.config.nodeSize) / 1125
 
       links.forEach((e, i) => {
 

@@ -6,11 +6,11 @@ declare var window: Window
 
 // https://github.com/webpack-contrib/raw-loader/issues/54
 declare module '*.vs' {
-  const content: string
+  const content: Function
   export = content
 }
 declare module '*.fs' {
-  const content: string
+  const content: Function
   export = content
 }
 declare module '*worker.js' {
