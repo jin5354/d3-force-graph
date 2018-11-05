@@ -365,11 +365,11 @@ export class D3ForceGraph {
     // 预准备节点与线，使用BufferGeometry，位置先定到-9999
     // z 关系
     // 高亮节点：0.0001
-    // 高亮箭头：-0.0004
-    // 高亮线：-0.0009
     // 头像：0.00005
     // 节点: 0
+    // 高亮箭头：-0.0004
     // 箭头：-0.0007
+    // 高亮线：-0.0009
     // 线：-0.001
     this.perfInfo.layoutStartTime = Date.now()
 
@@ -847,6 +847,7 @@ export class D3ForceGraph {
 
   highlight(id: string): void {
     if(this.highlighted !== id) {
+      this.unhighlight()
       this.addHighLight(id)
       this.highlighted = id
     }
