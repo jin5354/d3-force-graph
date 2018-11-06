@@ -393,6 +393,8 @@ export class D3ForceGraph {
       fragmentShader: nodesFS()
     })
 
+    this.nodes.material.extensions.derivatives = true
+
     this.processedData.nodes.forEach((e, i) => {
       this.nodes.positions[i * 3] = -9999
       this.nodes.positions[i * 3 + 1] = -9999
@@ -778,6 +780,8 @@ export class D3ForceGraph {
         fragmentShader: imageFS()
       })
 
+      info.imagePoint.material.extensions.derivatives = true
+
       info.imagePoint.geometry.addAttribute('position', new THREE.BufferAttribute(info.imagePoint.positions, 3))
       info.imagePoint.geometry.computeBoundingSphere()
 
@@ -896,6 +900,8 @@ export class D3ForceGraph {
       }),
       fragmentShader: hlNodesFS()
     })
+
+    this.hlNodes.material.extensions.derivatives = true
 
     targetNodes.forEach((e, i) => {
       this.hlNodes.positions[i * 3] = this.currentPositionStatus[this.processedData.nodeInfoMap[e].index * 2]
