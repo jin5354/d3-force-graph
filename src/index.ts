@@ -715,7 +715,7 @@ export class D3ForceGraph {
     // 节流
     if(!this.throttleTimer) {
       this.throttleTimer = window.setTimeout(() => {
-        if(this.camera.position.z > 300) {
+        if(!this.camera || this.camera.position.z > 300) {
           return
         }
 
