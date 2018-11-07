@@ -716,6 +716,8 @@ export class D3ForceGraph {
     if(!this.throttleTimer) {
       this.throttleTimer = window.setTimeout(() => {
         if(!this.camera || this.camera.position.z > 300) {
+          clearTimeout(this.throttleTimer)
+          this.throttleTimer = null
           return
         }
 
