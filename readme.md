@@ -1,6 +1,6 @@
-# D3-FORCE-GRAPH
+# D3-Force-Graph
 
-
+[![Build Status](https://travis-ci.org/jin5354/d3-force-graph.svg?branch=master)](https://travis-ci.org/jin5354/d3-force-graph)
 ![version](https://img.shields.io/npm/v/d3-force-graph.svg)
 ![mit](https://img.shields.io/npm/l/d3-force-graph.svg)
 
@@ -11,6 +11,8 @@
 ## Intro
 
 D3-FORCE-GRAPH is a javascript component which can create a force-directed graph using [D3-force](https://github.com/d3/d3-force) and web worker for calculation layout and [ThreeJS](https://github.com/mrdoob/three.js) for rendering. It can support large amount datasets rendering (~ 100k nodes and links) and custom styles.
+
+[Online Demos](https://webgl.run/list/HJPqwNgpX)
 
 ## Install
 
