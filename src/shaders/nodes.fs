@@ -14,5 +14,5 @@ void main() {
   vec4 t_Color = texture2D(texture, gl_PointCoord);
   float distance = length(gl_PointCoord - vec2(0.5, 0.5));
   gl_FragColor = mix(t_Color, transparent, aastep(0.5, distance));
-  if(gl_FragColor.a < 0.5) discard;
+  if(gl_FragColor.a == 0.0) discard;
 }

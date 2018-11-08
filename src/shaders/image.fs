@@ -25,5 +25,5 @@ void main() {
   }else {
     gl_FragColor = mix(t_Color, white, aastep(0.44, distance));
   }
-  if(gl_FragColor.a < 0.5) discard;
+  if(gl_FragColor.a == 0.0) discard;
 }
