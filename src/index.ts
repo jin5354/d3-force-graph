@@ -47,6 +47,7 @@ interface GraphBaseConfig {
   arrowSize?: number,
   lineWidth?: number,
   showArrow?: boolean,
+  backgroundColor?: RGB,
   highLightColor?: RGB,
   showStatTable?: boolean,
   roundedImage?: boolean,
@@ -141,6 +142,7 @@ const GRAPH_BASE_CONFIG: GraphBaseConfig = {
   arrowSize: 1250,
   lineWidth: 1,
   showArrow: true,
+  backgroundColor: [0, 0, 16],
   highLightColor: [255, 0, 0],
   showStatTable: true,
   roundedImage: true,
@@ -342,7 +344,7 @@ export class D3ForceGraph {
 
   prepareScene(): void {
     this.scene = new THREE.Scene()
-    this.scene.background = new THREE.Color(0x000010)
+    this.scene.background = new THREE.Color(this.config.backgroundColor[0] / 255, this.config.backgroundColor[1] / 255, this.config.backgroundColor[2] / 255)
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
       logarithmicDepthBuffer: true
