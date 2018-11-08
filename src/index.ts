@@ -734,9 +734,13 @@ export class D3ForceGraph {
           if(!info.imageTexture) {
             if(info.image){
               havec++
-              info.imageTexture = textureLoader.load(info.image)
-              info.imageTexture.needsUpdate = true
-              this.generateAvaPoint(info, id, x, y)
+              textureLoader.load(info.image, (texture) => {
+                info.imageTexture = texture
+                info.imageTexture.needsUpdate = true
+                this.generateAvaPoint(info, id, x, y)
+              }, undefined, () => {
+                info.image = null
+              })
             }else {
               nullc++
             }
