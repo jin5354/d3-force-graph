@@ -732,13 +732,9 @@ export class D3ForceGraph {
           if(!info.imageTexture) {
             if(info.image){
               havec++
-              this.getRoundImage(info.image).then((canvas) => {
-                info.imageTexture = new THREE.Texture(canvas)
-                info.imageTexture.needsUpdate = true
-                this.generateAvaPoint(info, id, x, y)
-              }).catch(() => {
-                info.image = null
-              })
+              info.imageTexture = textureLoader.load(info.image)
+              info.imageTexture.needsUpdate = true
+              this.generateAvaPoint(info, id, x, y)
             }else {
               nullc++
             }
@@ -819,34 +815,6 @@ export class D3ForceGraph {
       top: this.camera.position.y + offsetY,
       bottom: this.camera.position.y - offsetY
     }
-  }
-  getRoundImage(url: string): Promise<HTMLCanvasElement> {
-    return new Promise((res, rej) => {
-      let scaleCanvas = document.createElement('canvas')
-      let scaleContext = scaleCanvas.getContext('2d')
-      scaleCanvas.width = 64
-      scaleCanvas.height = 64
-      let img = new Image()
-      img.crossOrigin = 'anonymous'
-      img.src = url
-      img.onload = () => {
-        scaleContext.clearRect(0, 0, 64, 64)
-        scaleContext.drawImage(img, 0, 0, 64, 64)
-        let clipCanvas = document.createElement('canvas')
-        let clipContext = clipCanvas.getContext('2d')
-        clipCanvas.width = 64
-        clipCanvas.height = 64
-        clipContext.clearRect(0, 0, 64, 64)
-        let pattern = clipContext.createPattern(scaleCanvas, 'no-repeat')
-        clipContext.arc(32, 32, 32, 0, 2 * Math.PI)
-        clipContext.fillStyle = pattern
-        clipContext.fill()
-        res(clipCanvas)
-      }
-      img.onerror = () => {
-        rej()
-      }
-    })
   }
 
   highlight(id: string): void {

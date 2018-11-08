@@ -1,6 +1,5 @@
 uniform sampler2D texture;
 
-
 float aastep(float threshold, float value) {
 #ifdef GL_OES_standard_derivatives
   float afwidth = 1.0 * fwidth(value);
