@@ -7,6 +7,8 @@
 
 ![demo1](https://user-images.githubusercontent.com/6868950/48123497-05427700-e2b5-11e8-8d12-a260870eabe1.png)
 ![demo2](https://user-images.githubusercontent.com/6868950/48123158-2e163c80-e2b4-11e8-9521-ddc60c295151.png)
+![gif1](https://user-images.githubusercontent.com/6868950/57448377-ca34f680-728b-11e9-86ac-eea0ee9e980c.gif)
+![gif2](https://user-images.githubusercontent.com/6868950/57448381-cdc87d80-728b-11e9-8549-5e455e630264.gif)
 
 ## Intro
 
